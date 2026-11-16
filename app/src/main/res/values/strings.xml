@@ -1,0 +1,87 @@
+<resources>
+    <string name="app_name">PulseGoal</string>
+
+    <!-- Navigation -->
+    <string name="nav_today">Today</string>
+    <string name="nav_insights">Insights</string>
+    <string name="nav_reminders">Reminders</string>
+
+    <!-- Today Screen -->
+    <string name="today_title">Today\'s Pulse</string>
+    <string name="today_subtitle">Build momentum one check-in at a time</string>
+    <string name="daily_progress_label">Daily Completion</string>
+    <string name="goals_completed_format">%1$d of %2$d goals done</string>
+    <string name="best_streak_format">%1$d day streak</string>
+    <string name="filter_all">All</string>
+    <string name="new_goal_fab">New Goal</string>
+    <string name="empty_goals_title">Ready to set your first fitness goal?</string>
+    <string name="empty_goals_subtitle">Track steps, workouts, hydration, or mobility—and stay consistent with daily push reminders.</string>
+    <string name="add_starter_goals">Load Starter Pack</string>
+    <string name="create_custom_goal">Create Custom Goal</string>
+    <string name="quick_log_button">Log</string>
+
+    <!-- Goal Detail -->
+    <string name="goal_detail_title">Goal Details</string>
+    <string name="last_7_days">Last 7 Days</string>
+    <string name="recent_check_ins">Recent Check-ins</string>
+    <string name="no_logs_yet">No check-ins logged yet. Tap + Log to record your first progress.</string>
+    <string name="edit_goal">Edit Goal</string>
+    <string name="delete_goal">Delete Goal</string>
+    <string name="delete_goal_confirm_title">Delete this goal?</string>
+    <string name="delete_goal_confirm_body">This will permanently remove the goal and its logged history.</string>
+
+    <!-- Dialogs -->
+    <string name="dialog_new_goal_title">Create Fitness Goal</string>
+    <string name="dialog_edit_goal_title">Edit Fitness Goal</string>
+    <string name="goal_title_label">Goal Name</string>
+    <string name="goal_title_hint">e.g. Morning Run</string>
+    <string name="goal_category_label">Category</string>
+    <string name="goal_target_label">Daily Target</string>
+    <string name="goal_unit_label">Unit</string>
+    <string name="goal_increment_label">Quick-Add Step</string>
+    <string name="dialog_log_title">Log Progress</string>
+    <string name="log_amount_label">Amount (%1$s)</string>
+    <string name="log_note_label">Workout Note (Optional)</string>
+    <string name="log_note_hint">e.g. 5K outdoor pace felt strong</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_back">Navigate back</string>
+
+    <!-- Insights Screen -->
+    <string name="insights_title">Weekly Insights</string>
+    <string name="insights_subtitle">Consistency and training volume</string>
+    <string name="weekly_consistency">7-Day Goal Completion</string>
+    <string name="stat_weekly_rate">Weekly Rate</string>
+    <string name="stat_total_checkins">Check-ins</string>
+    <string name="stat_active_streak">Best Streak</string>
+    <string name="stat_completed_today">Done Today</string>
+    <string name="goal_breakdown_title">Goal Breakdown</string>
+    <string name="recent_activity_title">Activity Feed</string>
+    <string name="no_activity_yet">Log progress on a goal to see your activity feed here.</string>
+
+    <!-- Reminders & Notifications -->
+    <string name="reminders_title">Daily Reminders</string>
+    <string name="reminders_subtitle">Stay consistent with daily push notifications</string>
+    <string name="notification_channel_name">Daily Fitness Reminders</string>
+    <string name="notification_channel_desc">Scheduled daily reminders to log your personal fitness goals</string>
+    <string name="permission_granted_title">Push Notifications Enabled</string>
+    <string name="permission_granted_desc">PulseGoal can deliver daily reminders straight to your device.</string>
+    <string name="permission_needed_title">Allow Push Notifications</string>
+    <string name="permission_needed_desc">Grant notification permission so your daily fitness reminders appear on schedule.</string>
+    <string name="enable_notifications_btn">Enable Notifications</string>
+    <string name="daily_reminder_switch_title">Daily Push Reminder</string>
+    <string name="daily_reminder_switch_desc">Receive a daily nudge at your preferred training time</string>
+    <string name="reminder_time_label">Reminder Time</string>
+    <string name="reminder_days_label">Active Days</string>
+    <string name="smart_summary_title">Include Pending Goals Count</string>
+    <string name="smart_summary_desc">Automatically show how many goals remain for today</string>
+    <string name="custom_message_label">Custom Reminder Message</string>
+    <string name="custom_message_hint">Time to move! Log your daily fitness progress.</string>
+    <string name="notification_preview_label">Notification Preview</string>
+    <string name="send_test_notification">Send Test Notification</string>
+    <string name="test_notification_sent">Test notification sent! Check your notification shade.</string>
+    <string name="permission_required_for_test">Enable notification permission first to preview push alerts.</string>
+    <string name="default_notification_title">Time for Today\'s Fitness Pulse</string>
+    <string name="default_notification_body">Keep your streak alive—log your daily fitness goals in PulseGoal.</string>
+</resources>

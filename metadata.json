@@ -1,0 +1,6 @@
+{
+  "name": "PulseGoal",
+  "description": "Personal fitness goal tracker with workout & activity logging, streak tracking, and daily push notification reminders.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
