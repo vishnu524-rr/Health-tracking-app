@@ -4,10 +4,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.example.R
-import com.example.data.local.PulseGoalDatabase
 import com.example.data.model.DateKeyUtils
 import com.example.data.preferences.ReminderPreferencesRepository
-import com.example.data.repository.FitnessRepository
+import com.example.data.remote.FirestoreFitnessRepository
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,9 +30,8 @@ class DailyReminderReceiver : BroadcastReceiver() {
                         appContext.getString(R.string.default_notification_body)
                     }
 
-                    val body = if (settings.includeGoalSummary) {
-                        val db = PulseGoalDatabase.getInstance(appContext)
-                        val repo = FitnessRepository(db.fitnessGoalDao(), db.fitnessDao())
+                    val body = if (settings.includeGoalSummary && Firebase.auth.currentUser != null) {
+                        val repo = FirestoreFitnessRepository(appContext)
                         val (remaining, total) = repo.getTodayPendingSummary()
                         when {
                             total == 0 -> baseMessage
@@ -50,7 +50,6 @@ class DailyReminderReceiver : BroadcastReceiver() {
                     )
                 }
 
-                // Schedule the next occurrence for tomorrow / next active day
                 DailyReminderScheduler.scheduleNextReminder(appContext, settings)
             } finally {
                 pendingResult.finish()

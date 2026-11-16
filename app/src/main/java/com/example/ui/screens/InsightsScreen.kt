@@ -264,10 +264,11 @@ fun InsightsScreen(
                                 text = "${item.goalTitle}: +${numberFmt.format(item.log.amount)} ${item.goalUnit}",
                                 style = MaterialTheme.typography.titleSmall
                             )
+                            val timeMillis = item.log.createdAt?.toDate()?.time ?: System.currentTimeMillis()
                             val detail = buildString {
                                 append(item.log.dateKey)
                                 append(" • ")
-                                append(DateKeyUtils.formatLogTime(item.log.loggedAtMillis))
+                                append(DateKeyUtils.formatLogTime(timeMillis))
                                 if (item.log.note.isNotBlank()) {
                                     append(" — ")
                                     append(item.log.note)

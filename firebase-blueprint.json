@@ -1,0 +1,128 @@
+{
+  "entities": {
+    "FitnessGoal": {
+      "title": "FitnessGoal",
+      "description": "A user's personal fitness goal with target, current progress, and schedule.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "title": {
+          "type": "string",
+          "description": "Short display title of the fitness goal."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the fitness goal."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["STEPS", "CARDIO", "STRENGTH", "HYDRATION", "MOBILITY", "MINDFULNESS"],
+          "description": "Fitness goal category."
+        },
+        "targetValue": {
+          "type": "integer",
+          "description": "Daily target numeric value."
+        },
+        "currentProgress": {
+          "type": "integer",
+          "description": "Current progress recorded for the goal."
+        },
+        "unit": {
+          "type": "string",
+          "description": "Unit of measurement (e.g., steps, min, glasses)."
+        },
+        "quickIncrement": {
+          "type": "integer",
+          "description": "Quick-add step increment."
+        },
+        "startDate": {
+          "type": "integer",
+          "description": "Goal start date in epoch milliseconds."
+        },
+        "endDate": {
+          "type": "integer",
+          "description": "Optional goal end date in epoch milliseconds."
+        },
+        "isArchived": {
+          "type": "boolean",
+          "description": "Whether the goal is archived."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp updated via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "category",
+        "targetValue",
+        "currentProgress",
+        "unit",
+        "quickIncrement",
+        "startDate",
+        "isArchived",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "GoalLog": {
+      "title": "GoalLog",
+      "description": "An individual workout or progress check-in linked to a FitnessGoal.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "goalId": {
+          "type": "string",
+          "description": "Parent FitnessGoal Firestore document ID."
+        },
+        "amount": {
+          "type": "integer",
+          "description": "Amount logged in this check-in."
+        },
+        "dateKey": {
+          "type": "string",
+          "description": "Local calendar date in yyyy-MM-dd format."
+        },
+        "note": {
+          "type": "string",
+          "description": "Optional workout note."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "goalId",
+        "amount",
+        "dateKey",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/fitness_goals/{goalId}": {
+      "schema": { "$ref": "#/entities/FitnessGoal" },
+      "description": "User-owned fitness goals collection."
+    },
+    "/users/{userId}/goal_logs/{logId}": {
+      "schema": { "$ref": "#/entities/GoalLog" },
+      "description": "User-owned check-in logs for fitness goals."
+    }
+  }
+}

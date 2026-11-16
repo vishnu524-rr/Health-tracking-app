@@ -1,6 +1,13 @@
 package com.example
 
 import android.content.Context
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.example.data.local.FitnessGoal
@@ -10,12 +17,16 @@ import com.example.data.model.DateKeyUtils
 import com.example.data.model.GoalCategory
 import com.example.data.repository.FitnessRepository
 import com.example.notifications.DailyReminderScheduler
+import com.example.ui.screens.RoomDashboardScreen
+import com.example.ui.theme.PulseGoalTheme
+import com.example.ui.viewmodel.RoomDashboardViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -26,6 +37,9 @@ import java.util.concurrent.TimeUnit
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [36])
 class ExampleRobolectricTest {
+
+    @get:Rule
+    val composeRule = createComposeRule()
 
     @Test
     fun `app name matches PulseGoal`() {
@@ -102,7 +116,7 @@ class ExampleRobolectricTest {
         assertEquals(1, goals.size)
         val progress = goals.first()
         assertEquals(30, progress.todayLogged)
-        assertEquals(30, progress.goal.currentProgress)
+        assertEquals(30L, progress.goal.currentProgress)
         assertTrue(progress.isCompletedToday)
         assertEquals(2, progress.currentStreakDays)
         assertEquals(2, progress.bestStreakDays)
@@ -135,5 +149,75 @@ class ExampleRobolectricTest {
         assertEquals(Calendar.WEDNESDAY, triggerCal.get(Calendar.DAY_OF_WEEK))
         assertEquals(8, triggerCal.get(Calendar.HOUR_OF_DAY))
         assertEquals(30, triggerCal.get(Calendar.MINUTE))
+    }
+
+    @Test
+    fun `room dashboard viewModel and UI display fitness goals with progress bars`() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val db = Room.inMemoryDatabaseBuilder(context, PulseGoalDatabase::class.java)
+            .allowMainThreadQueries()
+            .build()
+        val goalDao = db.fitnessGoalDao()
+        val logDao = db.fitnessDao()
+        val repo = FitnessRepository(goalDao, logDao)
+
+        val goalId1 = goalDao.insertGoal(
+            FitnessGoal(
+                title = "10K Steps Challenge",
+                description = "Walk 10,000 steps every day",
+                category = GoalCategory.STEPS.name,
+                targetValue = 10000,
+                currentProgress = 6500,
+                unit = "steps",
+                quickIncrement = 1000
+            )
+        )
+        val goalId2 = goalDao.insertGoal(
+            FitnessGoal(
+                title = "Hydration Goal",
+                description = "Drink 8 glasses of water",
+                category = GoalCategory.HYDRATION.name,
+                targetValue = 8,
+                currentProgress = 4,
+                unit = "glasses",
+                quickIncrement = 1
+            )
+        )
+
+        val viewModel = RoomDashboardViewModel(repo)
+        val uiState = viewModel.uiState.first { !it.isLoading && it.goals.size == 2 }
+
+        assertEquals(2, uiState.goals.size)
+        assertEquals(65, uiState.goals[0].percentComplete)
+        assertEquals(0.65f, uiState.goals[0].progressFraction, 0.001f)
+        assertEquals(50, uiState.goals[1].percentComplete)
+
+        composeRule.setContent {
+            PulseGoalTheme {
+                RoomDashboardScreen(
+                    uiState = uiState,
+                    onSelectCategory = {},
+                    onQuickIncrement = {},
+                    onOpenCustomLog = {},
+                    onEditGoal = {},
+                    onDeleteGoal = {},
+                    onOpenCreateGoal = {},
+                    onLoadStarterGoals = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("room_goals_list").assertIsDisplayed()
+        composeRule.onNodeWithTag("room_goals_list").performScrollToNode(hasTestTag("room_goal_card_$goalId1"))
+        composeRule.onNodeWithTag("room_goal_progress_bar_$goalId1").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("10K Steps Challenge").assertIsDisplayed()
+        composeRule.onNodeWithText("65%").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("room_goals_list").performScrollToNode(hasTestTag("room_goal_card_$goalId2"))
+        composeRule.onNodeWithTag("room_goal_progress_bar_$goalId2").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Hydration Goal").assertIsDisplayed()
+        composeRule.onNodeWithText("50%").assertIsDisplayed()
+
+        db.close()
     }
 }

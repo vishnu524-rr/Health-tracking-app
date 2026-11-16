@@ -1,7 +1,7 @@
 package com.example.data.model
 
-import com.example.data.local.FitnessGoal
-import com.example.data.local.GoalLogEntity
+import com.example.data.remote.FirestoreFitnessGoal
+import com.example.data.remote.FirestoreGoalLog
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -17,28 +17,28 @@ data class DayTotal(
 }
 
 data class GoalWithProgress(
-    val goal: FitnessGoal,
+    val goal: FirestoreFitnessGoal,
     val category: GoalCategory,
     val todayLogged: Int,
     val currentStreakDays: Int,
     val bestStreakDays: Int,
     val weeklyTotal: Int,
     val last7Days: List<DayTotal>,
-    val recentLogs: List<GoalLogEntity>
+    val recentLogs: List<FirestoreGoalLog>
 ) {
     val progressFraction: Float
-        get() = if (goal.targetValue <= 0) 0f
+        get() = if (goal.targetValue <= 0L) 0f
         else (todayLogged.toFloat() / goal.targetValue.toFloat()).coerceIn(0f, 1f)
 
     val isCompletedToday: Boolean
-        get() = goal.targetValue > 0 && todayLogged >= goal.targetValue
+        get() = goal.targetValue > 0L && todayLogged.toLong() >= goal.targetValue
 
     val remainingToday: Int
-        get() = (goal.targetValue - todayLogged).coerceAtLeast(0)
+        get() = (goal.targetValue.toInt() - todayLogged).coerceAtLeast(0)
 }
 
 data class LogWithGoalInfo(
-    val log: GoalLogEntity,
+    val log: FirestoreGoalLog,
     val goalTitle: String,
     val goalUnit: String,
     val category: GoalCategory
@@ -113,9 +113,6 @@ object DateKeyUtils {
         }
     }
 
-    /**
-     * Converts Calendar.DAY_OF_WEEK (Sun=1..Sat=7) to ISO day of week (Mon=1..Sun=7).
-     */
     fun calendarDayToIso(calendarDayOfWeek: Int): Int {
         return when (calendarDayOfWeek) {
             Calendar.MONDAY -> 1

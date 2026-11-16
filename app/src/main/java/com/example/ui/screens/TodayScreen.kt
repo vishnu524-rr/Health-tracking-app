@@ -2,7 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,10 +36,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.R
 import com.example.data.model.DateKeyUtils
 import com.example.data.model.GoalCategory
@@ -55,7 +55,7 @@ fun TodayScreen(
     onSelectCategory: (GoalCategory?) -> Unit,
     onQuickIncrement: (GoalWithProgress) -> Unit,
     onOpenCustomLog: (GoalWithProgress) -> Unit,
-    onGoalClick: (Long) -> Unit,
+    onGoalClick: (String) -> Unit,
     onOpenCreateGoal: () -> Unit,
     onLoadStarterGoals: () -> Unit,
     onOpenReminders: () -> Unit,
@@ -141,6 +141,21 @@ fun TodayScreen(
                     }
                 }
 
+                AnimatedVisibility(visible = uiState.errorMessage != null) {
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = uiState.errorMessage ?: "",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(14.dp)
+                        )
+                    }
+                }
+
                 AnimatedVisibility(visible = uiState.goals.isNotEmpty()) {
                     DailyOverviewRingCard(summary = uiState.weeklySummary)
                 }
@@ -197,14 +212,15 @@ fun TodayScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.img_empty_goals),
+                        AsyncImage(
+                            model = R.drawable.img_empty_goals,
                             contentDescription = "Fitness goals illustration",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(190.dp)
                                 .clip(MaterialTheme.shapes.medium)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
                         )
                         Text(
                             text = stringResource(R.string.empty_goals_title),

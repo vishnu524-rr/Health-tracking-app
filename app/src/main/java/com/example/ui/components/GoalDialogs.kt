@@ -30,14 +30,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.R
-import com.example.data.local.FitnessGoal
 import com.example.data.model.GoalCategory
+import com.example.data.remote.FirestoreFitnessGoal
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CreateOrEditGoalDialog(
-    initialGoal: FitnessGoal? = null,
+    initialGoal: FirestoreFitnessGoal? = null,
     onDismiss: () -> Unit,
     onConfirm: (
         title: String,

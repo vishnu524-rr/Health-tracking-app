@@ -11,14 +11,20 @@ import com.example.data.model.GoalCategory
 import com.example.data.model.GoalWithProgress
 import com.example.data.model.LogWithGoalInfo
 import com.example.data.model.WeeklySummary
+import com.example.data.remote.FirestoreFitnessGoal
+import com.example.data.remote.FirestoreGoalLog
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import java.util.Date
 import java.util.concurrent.TimeUnit
 
 class FitnessRepository(
     private val goalDao: FitnessGoalDao,
     private val logDao: FitnessDao
 ) {
+
+    val fitnessGoalsFlow: Flow<List<FitnessGoal>> = goalDao.observeAllGoals()
 
     val goalsWithProgressFlow: Flow<List<GoalWithProgress>> = combine(
         goalDao.observeAllGoals(),
@@ -34,7 +40,7 @@ class FitnessRepository(
                 .groupBy { it.dateKey }
                 .mapValues { (_, dayLogs) -> dayLogs.sumOf { it.amount } }
 
-            val todayLogged = dailyTotalsMap[todayKey] ?: goal.currentProgress
+            val todayLogged = maxOf(dailyTotalsMap[todayKey] ?: 0, goal.currentProgress)
             val last7DayTotals = last7Days.map { (dateKey, shortLabel) ->
                 DayTotal(
                     dateKey = dateKey,
@@ -50,14 +56,14 @@ class FitnessRepository(
             )
 
             GoalWithProgress(
-                goal = goal,
+                goal = goal.toFirestoreModel(),
                 category = GoalCategory.fromString(goal.category),
                 todayLogged = todayLogged,
                 currentStreakDays = currentStreak,
                 bestStreakDays = bestStreak,
                 weeklyTotal = last7DayTotals.sumOf { it.amount },
                 last7Days = last7DayTotals,
-                recentLogs = goalLogs.take(30)
+                recentLogs = goalLogs.take(30).map { it.toFirestoreModel() }
             )
         }
     }
@@ -138,7 +144,7 @@ class FitnessRepository(
         logs.mapNotNull { log ->
             val goal = goalsById[log.goalId] ?: return@mapNotNull null
             LogWithGoalInfo(
-                log = log,
+                log = log.toFirestoreModel(),
                 goalTitle = goal.title,
                 goalUnit = goal.unit,
                 category = GoalCategory.fromString(goal.category)
@@ -174,6 +180,32 @@ class FitnessRepository(
         goalDao.updateGoal(goal)
     }
 
+    suspend fun updateGoalDetails(
+        goalId: Long,
+        title: String,
+        description: String,
+        category: GoalCategory,
+        targetValue: Int,
+        unit: String,
+        quickIncrement: Int,
+        startDate: Long,
+        endDate: Long?
+    ) {
+        val existing = goalDao.getGoalById(goalId) ?: return
+        goalDao.updateGoal(
+            existing.copy(
+                title = title.trim(),
+                description = description.trim(),
+                category = category.name,
+                targetValue = targetValue.coerceAtLeast(1),
+                unit = unit.trim().ifBlank { category.defaultUnit },
+                quickIncrement = quickIncrement.coerceAtLeast(1),
+                startDate = startDate,
+                endDate = endDate
+            )
+        )
+    }
+
     suspend fun deleteGoal(goalId: Long) {
         goalDao.deleteGoalById(goalId)
     }
@@ -190,6 +222,18 @@ class FitnessRepository(
         logDao.insertLog(log)
         val todayTotal = logDao.getTotalLoggedForGoalOnDate(goalId, todayKey)
         goalDao.updateProgress(goalId, todayTotal)
+    }
+
+    suspend fun incrementGoalProgress(goalId: Long, amount: Int, note: String = "") {
+        if (amount <= 0) return
+        val log = GoalLogEntity(
+            goalId = goalId,
+            amount = amount,
+            dateKey = DateKeyUtils.todayKey(),
+            note = note.trim()
+        )
+        logDao.insertLog(log)
+        goalDao.incrementProgress(goalId, amount)
     }
 
     suspend fun deleteLog(logId: Long) {
@@ -305,4 +349,31 @@ class FitnessRepository(
 
         return currentStreak to bestStreak
     }
+
+    private fun FitnessGoal.toFirestoreModel(): FirestoreFitnessGoal = FirestoreFitnessGoal(
+        id = id.toString(),
+        userId = "",
+        title = title,
+        description = description,
+        category = category,
+        targetValue = targetValue.toLong(),
+        currentProgress = currentProgress.toLong(),
+        unit = unit,
+        quickIncrement = quickIncrement.toLong(),
+        startDate = startDate,
+        endDate = endDate,
+        isArchived = isArchived,
+        createdAt = Timestamp(Date(createdAtMillis)),
+        updatedAt = Timestamp(Date(createdAtMillis))
+    )
+
+    private fun GoalLogEntity.toFirestoreModel(): FirestoreGoalLog = FirestoreGoalLog(
+        id = id.toString(),
+        userId = "",
+        goalId = goalId.toString(),
+        amount = amount.toLong(),
+        dateKey = dateKey,
+        note = note,
+        createdAt = Timestamp(Date(loggedAtMillis))
+    )
 }

@@ -1,0 +1,95 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidFitnessGoal(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 80 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 300)) &&
+             data.category is string && data.category in ['STEPS', 'CARDIO', 'STRENGTH', 'HYDRATION', 'MOBILITY', 'MINDFULNESS'] &&
+             data.targetValue is int && data.targetValue >= 1 && data.targetValue <= 1000000 &&
+             data.currentProgress is int && data.currentProgress >= 0 && data.currentProgress <= 10000000 &&
+             data.unit is string && data.unit.size() >= 1 && data.unit.size() <= 24 &&
+             data.quickIncrement is int && data.quickIncrement >= 1 && data.quickIncrement <= 100000 &&
+             data.startDate is int && data.startDate > 0 &&
+             (!('endDate' in data) || data.endDate == null || (data.endDate is int && data.endDate >= data.startDate)) &&
+             data.isArchived is bool;
+    }
+
+    function isValidGoalLog(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             isValidId(data.goalId) &&
+             data.amount is int && data.amount >= 1 && data.amount <= 1000000 &&
+             data.dateKey is string && data.dateKey.size() == 10 && data.dateKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') &&
+             (!('note' in data) || (data.note is string && data.note.size() <= 200));
+    }
+
+    match /users/{userId}/fitness_goals/{goalId} {
+      allow get: if isOwner(userId) && isValidId(goalId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(goalId) &&
+                       incoming().keys().hasAll(['userId', 'title', 'category', 'targetValue', 'currentProgress', 'unit', 'quickIncrement', 'startDate', 'isArchived', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'title', 'description', 'category', 'targetValue', 'currentProgress', 'unit', 'quickIncrement', 'startDate', 'endDate', 'isArchived', 'createdAt', 'updatedAt']) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time &&
+                       isValidFitnessGoal(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(goalId) &&
+                       isValidFitnessGoal(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'category', 'targetValue', 'currentProgress', 'unit', 'quickIncrement', 'startDate', 'endDate', 'isArchived', 'updatedAt']);
+
+      allow delete: if isOwner(userId) && isValidId(goalId);
+    }
+
+    match /users/{userId}/goal_logs/{logId} {
+      allow get: if isOwner(userId) && isValidId(logId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(logId) &&
+                       incoming().keys().hasAll(['userId', 'goalId', 'amount', 'dateKey', 'createdAt']) &&
+                       incoming().keys().hasOnly(['userId', 'goalId', 'amount', 'dateKey', 'note', 'createdAt']) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       isValidGoalLog(incoming(), userId) &&
+                       exists(/databases/$(database)/documents/users/$(userId)/fitness_goals/$(incoming().goalId));
+
+      allow update: if false;
+      allow delete: if isOwner(userId) && isValidId(logId);
+    }
+  }
+}

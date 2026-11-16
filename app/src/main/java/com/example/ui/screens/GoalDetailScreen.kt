@@ -49,10 +49,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.R
-import com.example.data.local.FitnessGoal
 import com.example.data.model.DateKeyUtils
 import com.example.data.model.GoalCategory
 import com.example.data.model.GoalWithProgress
+import com.example.data.remote.FirestoreFitnessGoal
+import com.example.data.remote.FirestoreGoalLog
 import com.example.ui.components.CreateOrEditGoalDialog
 import com.example.ui.components.CustomLogDialog
 import com.example.ui.components.Goal7DayMiniChart
@@ -63,11 +64,11 @@ import java.text.NumberFormat
 fun GoalDetailScreen(
     goalProgress: GoalWithProgress?,
     onBack: () -> Unit,
-    onQuickIncrement: (Long, Int) -> Unit,
-    onCustomLog: (Long, Int, String) -> Unit,
-    onUpdateGoal: (FitnessGoal) -> Unit,
-    onDeleteGoal: (Long) -> Unit,
-    onDeleteLog: (Long) -> Unit,
+    onQuickIncrement: (String, Int) -> Unit,
+    onCustomLog: (String, Int, String) -> Unit,
+    onUpdateGoal: (FirestoreFitnessGoal) -> Unit,
+    onDeleteGoal: (String) -> Unit,
+    onDeleteLog: (FirestoreGoalLog) -> Unit,
     modifier: Modifier = Modifier
 ) {
     BackHandler(onBack = onBack)
@@ -216,7 +217,7 @@ fun GoalDetailScreen(
                                 )
                                 StatPill(
                                     label = "7d Total",
-                                    value = "${numberFmt.format(goalProgress.weeklyTotal)}",
+                                    value = numberFmt.format(goalProgress.weeklyTotal),
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -227,7 +228,7 @@ fun GoalDetailScreen(
                             ) {
                                 Button(
                                     onClick = {
-                                        onQuickIncrement(goalProgress.goal.id, goalProgress.goal.quickIncrement)
+                                        onQuickIncrement(goalProgress.goal.id, goalProgress.goal.quickIncrement.toInt())
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = accent),
                                     modifier = Modifier
@@ -326,10 +327,11 @@ fun GoalDetailScreen(
                                         text = "+${numberFmt.format(log.amount)} ${goalProgress.goal.unit}",
                                         style = MaterialTheme.typography.titleSmall
                                     )
+                                    val timeMillis = log.createdAt?.toDate()?.time ?: System.currentTimeMillis()
                                     val subtitle = buildString {
                                         append(log.dateKey)
                                         append(" • ")
-                                        append(DateKeyUtils.formatLogTime(log.loggedAtMillis))
+                                        append(DateKeyUtils.formatLogTime(timeMillis))
                                         if (log.note.isNotBlank()) {
                                             append(" — ")
                                             append(log.note)
@@ -342,7 +344,7 @@ fun GoalDetailScreen(
                                     )
                                 }
                                 IconButton(
-                                    onClick = { onDeleteLog(log.id) },
+                                    onClick = { onDeleteLog(log) },
                                     modifier = Modifier.testTag("delete_log_${log.id}")
                                 ) {
                                     Icon(
@@ -369,9 +371,9 @@ fun GoalDetailScreen(
                         title = title,
                         description = description,
                         category = category.name,
-                        targetValue = target,
+                        targetValue = target.toLong(),
                         unit = unit,
-                        quickIncrement = increment,
+                        quickIncrement = increment.toLong(),
                         startDate = startDate,
                         endDate = endDate
                     )
@@ -385,7 +387,7 @@ fun GoalDetailScreen(
         CustomLogDialog(
             goalTitle = goalProgress.goal.title,
             unit = goalProgress.goal.unit,
-            defaultAmount = goalProgress.goal.quickIncrement,
+            defaultAmount = goalProgress.goal.quickIncrement.toInt(),
             onDismiss = { showLogDialog = false },
             onConfirm = { amount, note ->
                 onCustomLog(goalProgress.goal.id, amount, note)
